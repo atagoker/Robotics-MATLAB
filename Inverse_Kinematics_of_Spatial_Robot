@@ -1,37 +1,28 @@
 close all;
 clear all;
 
-% Import the ETS3 library
 import ETS3.*;
 
-% Initial joint angles
 q1 = 0;
 q2 = pi/4;
 q3 = -pi/6;
 
-% Define link lengths
 l1 = 5;
 l2 = 1;
 l3 = 1;
 
-% Create the robot model
 rob = SerialLink([
     Revolute('d', l1, 'alpha', pi/2),
     Revolute('d', 0, 'a', 1),
     Revolute('d', 0, 'a', 1)
 ]);
 
-% Name the robot
 rob.name = 'ATATAN';
 
-% Compute the forward kinematics for the initial joint angles
 result = rob.fkine([q1 q2 q3]);
 
-% Solve the inverse kinematics for the given end-effector position
 inverse = rob.ikine(result, 'mask', [1 1 1 0 0 0]);
 
-% Verify the forward kinematics with the computed inverse solution
 rob.fkine(inverse);
 
-% Plot the robot configuration
 rob.plot(inverse);
