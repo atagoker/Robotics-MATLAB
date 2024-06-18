@@ -1,0 +1,43 @@
+l1 = 1; 
+l2 = 0.5; 
+
+q0 = [pi/3, -pi/3]; 
+
+ts = [0, 100]; 
+
+A = [0.5; -0.25]; 
+B = [1; 0.25]; 
+D = [B(1); A(2)]; 
+C = [A(1); B(2)]; 
+vertices = { C, B, D, A }; 
+
+figure(); 
+hold on; 
+grid on; 
+grid minor; 
+
+[t, q] = ode45(@(t, q) move_manipulator(t, q, l1, l2, A), ts, q0);
+q0 = q(end,:); 
+
+for i = 1:length(vertices)
+    [t, q] = ode45(@(t, q) move_manipulator(t, q, l1, l2, vertices{i}), ts, q0);
+    plot( ...
+        l1*cos(q(:,1)) + l2*cos(q(:,1)+q(:,2)), ...
+        l1*sin(q(:,1)) + l2*sin(q(:,1)+q(:,2)) ...
+    );
+    q0 = q(end,:); 
+end
+
+function dq = move_manipulator(t, q, l1, l2, point)
+    gamma = 1; % Control gain
+    Kinematics = [
+        l1*cos(q(1)) + l2*cos(q(1)+q(2));
+        l1*sin(q(1)) + l2*sin(q(1)+q(2))
+    ];
+    Jacoby = [ ...
+        -l2*sin(q(1) + q(2))-l1*sin(q(1)), -l2*sin(q(1) + q(2)); ...
+        l2*cos(q(1) + q(2))+l1*cos(q(1)), l2*cos(q(1) + q(2))
+    ];
+    dq = zeros(2,1);
+    dq = -gamma * inv(Jacoby) * (Kinematics - point);
+end
