@@ -1,0 +1,30 @@
+close all;
+clear all;
+
+l1 = 1;
+l2 = 0.5;
+P = [1; 1];
+
+% Calculate the distance to the point P
+L = sqrt(P(1)^2 + P(2)^2);
+alpha = acos(P(1) / L);
+beta = acos((l1^2 + L^2 - l2^2) / (2 * l1 * L));
+
+% First solution for q1 and q2
+q1 = alpha + beta;
+q2 = -acos((P(1)^2 + P(2)^2 - l1^2 - l2^2) / (2 * l1 * l2));
+
+% Alternative solution for q1 and q2
+q11 = alpha - beta;
+q22 = acos((P(1)^2 + P(2)^2 - l1^2 - l2^2) / (2 * l1 * l2));
+
+% Create the robot model
+rob = SerialLink([ Revolute('a', l1), Revolute('a', l2)]);
+rob.name = "WROCLAW";
+
+% Plot the robot configuration
+rob.plot([q1, q2]);
+
+% Verify the end effector position
+Px = l1 * cos(q1) + l2 * cos(q1 + q2);
+Py = l1 * sin(q1) + l2 * sin(q1 + q2);
