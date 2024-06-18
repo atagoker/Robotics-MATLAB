@@ -1,0 +1,67 @@
+close all;
+clear all;
+
+sx = 1.9;
+sy = 0;
+r = 0.3;
+
+x_points = [1.6, 2.2, 2, 2.05, 1.8, 1.75];
+
+y_points = zeros(length(x_points), 2);
+
+for i = 1:length(x_points)
+    x = x_points(i);
+    y1 = sy + sqrt(r^2 - (x - sx)^2);
+    y2 = sy - sqrt(r^2 - (x - sx)^2);
+    y_points(i, :) = [y1, y2];
+    fprintf('Point %d: (%.2f, %.2f) and (%.2f, %.2f)\n', i, x, y1, x, y2);
+end
+
+l1 = 5; l2 = 1; l3 = 1;
+rob = SerialLink([
+    Revolute('d', l1, 'alpha', pi/2),
+    Revolute('d', 0, 'a', 1),
+    Revolute('d', 0, 'a', 1)
+]);
+rob.name = 'RT';
+
+ik_solutions = [];
+
+initial_guesses = [
+    0, 0, 0;
+    pi/4, -pi/4, pi/4;
+    -pi/4, pi/4, -pi/4;
+];
+
+for i = 1:length(x_points)
+    for j = 1:2
+        point = [x_points(i); y_points(i, j); 0];
+        solution_found = false;
+        for k = 1:size(initial_guesses, 1)
+            try
+                options = struct('ilimit', 2000, 'rlimit', 1000);
+                result = rob.ikine(transl(point), 'mask', [1 1 1 0 0 0], 'q0', initial_guesses(k, :), options);
+                ik_solutions = [ik_solutions; result];
+                fprintf('IK solution for point (%.2f, %.2f): q = [%.2f, %.2f, %.2f]\n', x_points(i), y_points(i, j), result(1), result(2), result(3));
+                solution_found = true;
+                break;
+            catch
+            end
+        end
+        if ~solution_found
+            fprintf('No IK solution for point (%.2f, %.2f)\n', x_points(i), y_points(i, j));
+        end
+    end
+end
+
+if ~isempty(ik_solutions)
+    figure;
+    hold on;
+    grid on;
+    grid minor;
+    for k = 1:size(ik_solutions, 1)
+        rob.plot(ik_solutions(k, :));
+    end
+else
+    disp('No valid IK solutions found for plotting.');
+end
